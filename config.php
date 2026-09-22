@@ -12,7 +12,7 @@ define('MAX_FILE_SIZE', 120 * 1024 * 1024);
 // Extensoes de audio e video permitidas
 define('ALLOWED_EXTENSIONS', ['mp3', 'wav', 'm4a', 'ogg', 'aac', 'flac', 'mp4', 'webm']);
 
-// Chave da API do Gemini (pode ser definida aqui ou informada na interface)
+// Chave da API do Gemini (configuravel via Environment Variable GEMINI_API_KEY no Render ou via interface)
 define('DEFAULT_GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: '');
 
 // Cria o diretorio de uploads caso nao exista
