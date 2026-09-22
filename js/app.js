@@ -27,6 +27,20 @@ document.addEventListener("DOMContentLoaded", function () {
     var uploadedFileId = null;
     var currentTranscription = "";
     var currentSummaryObj = null;
+    var hasBackendKey = false;
+
+    // Checa se ja tem chave configurada no backend
+    fetch("api.php?check_config=1")
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res && res.has_backend_key) {
+                hasBackendKey = true;
+                if (!apiKeyInput.value) {
+                    apiKeyInput.placeholder = "Chave configurada no servidor (GEMINI_API_KEY) ativa!";
+                }
+            }
+        })
+        .catch(function () {});
 
     var savedKey = localStorage.getItem("gemini_api_key") || "";
     if (savedKey) {
@@ -38,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var key = apiKeyInput.value.trim();
             if (key) {
                 localStorage.setItem("gemini_api_key", key);
-                showToast("Chave salva com sucesso!");
+                showToast("Chave salva no navegador com sucesso!");
             } else {
                 localStorage.removeItem("gemini_api_key");
                 showToast("Chave removida.", "info");
@@ -84,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fileSizeSpan.textContent = (file.size / (1024 * 1024)).toFixed(2) + " MB";
         selectedFileCard.classList.remove("hidden");
         resultsSection.classList.add("hidden");
-        processBtn.disabled = false;
+        processBtn.disabled = true;
 
         var objectUrl = URL.createObjectURL(file);
         audioPlayer.src = objectUrl;
@@ -97,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
         uploadProgressCard.classList.remove("hidden");
         uploadProgressBar.style.width = "0%";
         uploadProgressText.textContent = "0%";
-        statusText.textContent = "Enviando arquivo de audio...";
+        statusText.textContent = "Enviando arquivo para o servidor... aguarde.";
         processBtn.disabled = true;
 
         var formData = new FormData();
@@ -115,24 +129,22 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         xhr.onload = function () {
-            if (xhr.status === 200) {
-                try {
-                    var res = JSON.parse(xhr.responseText);
-                    if (res.success) {
-                        uploadedFileId = res.file_id;
-                        statusText.textContent = "Upload concluido! Pronto para processar com IA.";
-                        processBtn.disabled = false;
-                        showToast("Arquivo enviado com sucesso!");
-                    } else {
-                        statusText.textContent = "Erro: " + res.error;
-                        showToast(res.error, "error");
-                    }
-                } catch (err) {
-                    statusText.textContent = "Erro ao ler resposta do servidor.";
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (xhr.status === 200 && res.success) {
+                    uploadedFileId = res.file_id;
+                    statusText.textContent = "Upload concluido (" + res.size_formatted + ")! Pronto para transcrever.";
+                    processBtn.disabled = false;
+                    showToast("Arquivo enviado com sucesso!");
+                } else {
+                    var errorMsg = res.error || ("Falha no upload (HTTP " + xhr.status + ")");
+                    statusText.textContent = "Erro: " + errorMsg;
+                    showToast(errorMsg, "error");
                 }
-            } else {
-                statusText.textContent = "Falha no upload (" + xhr.status + ").";
-                showToast("Falha no upload do audio.", "error");
+            } catch (err) {
+                var rawSnippet = xhr.responseText.substring(0, 120);
+                statusText.textContent = "Erro no servidor (HTTP " + xhr.status + "): " + (rawSnippet || "Sem resposta");
+                showToast("Erro no processamento do upload.", "error");
             }
         };
 
@@ -152,13 +164,19 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        if (!apiKey && !hasBackendKey) {
+            showToast("Por favor, insira sua chave da API Gemini ou configure no servidor.", "warning");
+            apiKeyInput.focus();
+            return;
+        }
+
         if (apiKey) {
             localStorage.setItem("gemini_api_key", apiKey);
         }
 
         processBtn.disabled = true;
-        processBtn.innerHTML = "Processando com IA...";
-        statusText.textContent = "Processando audio com a IA Gemini (transcrevendo e resumindo)... aguarde.";
+        processBtn.innerHTML = "<span class=\"animate-pulse\">Processando com IA...</span>";
+        statusText.textContent = "Enviando para a IA Gemini (transcrevendo e gerando resumo)... isso pode levar de 20 a 60 segundos.";
 
         try {
             var resp = await fetch("api.php", {
@@ -184,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
             statusText.textContent = "Erro: " + err.message;
         } finally {
             processBtn.disabled = false;
-            processBtn.innerHTML = "Transcrever e Gerar Resumo com IA";
+            processBtn.innerHTML = "<svg class=\"w-5 h-5 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\" /></svg> Transcrever e Gerar Resumo com IA";
         }
     });
 
