@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Configuracoes da Aplicacao de Transcricao e Resumo com IA
  */
@@ -6,8 +6,8 @@
 // Diretorio de uploads temporarios
 define('UPLOAD_DIR', __DIR__ . '/uploads/');
 
-// Tamanho maximo permitido de upload (ex: 50MB)
-define('MAX_FILE_SIZE', 50 * 1024 * 1024);
+// Tamanho maximo permitido de upload (120MB)
+define('MAX_FILE_SIZE', 120 * 1024 * 1024);
 
 // Extensoes de audio e video permitidas
 define('ALLOWED_EXTENSIONS', ['mp3', 'wav', 'm4a', 'ogg', 'aac', 'flac', 'mp4', 'webm']);

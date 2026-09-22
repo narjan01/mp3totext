@@ -63,7 +63,7 @@
                         Arraste e solte seu arquivo de audio aqui ou <span class="text-indigo-400 underline">clique para selecionar</span>
                     </p>
                     <p class="text-xs text-slate-400">
-                        Formatos suportados: MP3, WAV, M4A, OGG, AAC, MP4, WEBM (Ate 50MB)
+                        Formatos suportados: MP3, WAV, M4A, OGG, AAC, MP4, WEBM (Ate 120MB)
                     </p>
                 </div>
             </div>
